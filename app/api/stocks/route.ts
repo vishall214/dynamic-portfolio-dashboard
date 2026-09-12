@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import YahooFinance from "yahoo-finance2";
 import { portfolio } from "@/data/portfolio";
+import { getGoogleFinanceData } from "@/lib/google-finance";
 
 const yahooFinance = new YahooFinance();
 
@@ -10,6 +11,14 @@ const cache = new Map<string, {
 }>();
 
 const CACHE_TIME = 12000;
+
+function toGoogleSymbol(symbol: string) {
+  if (symbol.endsWith(".NS")) {
+    return `${symbol.replace(".NS", "")}:NSE`;
+  }
+
+  return `${symbol.replace(".BO", "")}:BOM`;
+}
 
 export async function GET() {
   const data = await Promise.all(
@@ -23,38 +32,53 @@ export async function GET() {
         };
       }
 
+      let cmp: number | null = null;
+      let peRatio: number | null = null;
+      let latestEarnings: number | null = null;
+
       try {
         const result = await yahooFinance.quoteSummary(
           stock.exchangeSymbol,
           {
-            modules: ["price", "summaryDetail"],
+            modules: ["price"],
           }
         );
 
-        const liveData = {
-          cmp: result.price?.regularMarketPrice ?? null,
-          peRatio: result.summaryDetail?.trailingPE ?? null,
-          latestEarnings: null,
-        };
-
-        cache.set(stock.exchangeSymbol, {
-          data: liveData,
-          time: Date.now(),
-        });
-
-        return {
-          ...stock,
-          ...liveData,
-        };
-      } catch (error) {
-        return {
-          ...stock,
-          cmp: null,
-          peRatio: null,
-          latestEarnings: null,
-          error: "Failed to fetch stock data",
-        };
+        cmp = result.price?.regularMarketPrice ?? null;
+      } catch {
+        console.log(
+          `Yahoo Finance failed for ${stock.exchangeSymbol}`
+        );
       }
+
+      try {
+        const result = await getGoogleFinanceData(
+          toGoogleSymbol(stock.exchangeSymbol)
+        );
+
+        peRatio = result.peRatio;
+        latestEarnings = result.latestEarnings;
+      } catch {
+        console.log(
+          `Google Finance failed for ${stock.exchangeSymbol}`
+        );
+      }
+
+      const liveData = {
+        cmp,
+        peRatio,
+        latestEarnings,
+      };
+
+      cache.set(stock.exchangeSymbol, {
+        data: liveData,
+        time: Date.now(),
+      });
+
+      return {
+        ...stock,
+        ...liveData,
+      };
     })
   );
 

@@ -15,6 +15,7 @@ import {
   buildRows,
   formatCurrency,
   formatPercent,
+  groupBySector,
 } from "@/lib/portfolio-utils";
 import { StockLiveData, StockRow } from "@/types/stock";
 
@@ -68,6 +69,10 @@ const columns = [
     header: "P/E",
     cell: (info) => info.getValue() ?? "-",
   }),
+  helper.accessor("latestEarnings", {
+    header: "Latest Earnings",
+    cell: (info) => formatCurrency(info.getValue()),
+  }),
 ];
 
 export function PortfolioTable() {
@@ -75,6 +80,7 @@ export function PortfolioTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
 
   useEffect(() => {
     async function getData() {
@@ -98,6 +104,7 @@ export function PortfolioTable() {
         }
 
         setRows(buildRows(portfolio, live));
+        setFetchedAt(result.fetchedAt);
         setError(false);
       } catch {
         setError(true);
@@ -130,13 +137,36 @@ export function PortfolioTable() {
     return <p>Failed to load stock data.</p>;
   }
 
-  const sectors = [...new Set(rows.map((row) => row.sector))];
+  const sectors = groupBySector(rows);
 
   return (
     <div>
+      <p className="mb-4 text-sm text-gray-600">
+        Last updated:{" "}
+        {fetchedAt ? new Date(fetchedAt).toLocaleTimeString() : "-"}
+      </p>
+
       {sectors.map((sector) => (
-        <div key={sector} className="mb-6">
-          <h2 className="mb-2 text-lg font-bold">{sector}</h2>
+        <div key={sector.sector} className="mb-6">
+          <h2 className="mb-2 text-lg font-bold">{sector.sector}</h2>
+
+          <div className="mb-2">
+            <p>
+              Total Investment: {formatCurrency(sector.totalInvestment)}
+            </p>
+            <p>
+              Total Present Value: {formatCurrency(sector.totalPresentValue)}
+            </p>
+            <p
+              className={
+                sector.totalGainLoss >= 0
+                  ? "text-green-600"
+                  : "text-red-600"
+              }
+            >
+              Gain/Loss: {formatCurrency(sector.totalGainLoss)}
+            </p>
+          </div>
 
           <table className="w-full border">
             <thead>
@@ -161,7 +191,9 @@ export function PortfolioTable() {
             <tbody>
               {table
                 .getRowModel()
-                .rows.filter((row) => row.original.sector === sector)
+                .rows.filter(
+                  (row) => row.original.sector === sector.sector
+                )
                 .map((row) => (
                   <tr key={row.id}>
                     {row.getVisibleCells().map((cell) => (

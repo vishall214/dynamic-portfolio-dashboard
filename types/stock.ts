@@ -14,12 +14,12 @@ export interface StockLiveData {
     error?: string;
 }
 
-export interface Stockrow extends StockInput, StockLiveData {
+export interface StockRow extends StockInput, StockLiveData {
     investment: number;
-    presentValue: number;
-    gainLoss: number;
-    gainLessPct: number;
-    PortfolioPct: number;
+    presentValue: number | null;
+    gainLoss: number | null;
+    gainLossPct: number | null;
+    portfolioPct: number;
 }
 
 export interface SectorSummary {
@@ -27,6 +27,6 @@ export interface SectorSummary {
     totalInvestment: number;
     totalPresentValue: number;
     totalGainLoss: number;
-    rows: Stockrow[];
+    rows: StockRow[];
 }
 

@@ -90,10 +90,15 @@ export function PortfolioTable() {
         const live: Record<string, StockLiveData> = {};
 
         for (const stock of result.data) {
-          live[stock.exchangeSymbol] = stock;
+          live[stock.exchangeSymbol] = {
+            cmp: stock.cmp,
+            peRatio: stock.peRatio,
+            latestEarnings: stock.latestEarnings,
+          };
         }
 
         setRows(buildRows(portfolio, live));
+        setError(false);
       } catch {
         setError(true);
       } finally {

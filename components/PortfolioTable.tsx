@@ -133,7 +133,7 @@ export function PortfolioTable() {
 
   return (
     <div>
-      <p className="mb-4 text-sm text-gray-600">
+      <p className="mb-4 text-sm text-white">
         Last updated:{" "}
         {fetchedAt
           ? new Date(fetchedAt).toLocaleTimeString()

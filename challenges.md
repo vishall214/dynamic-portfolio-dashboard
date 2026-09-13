@@ -2,6 +2,8 @@
 
 The project looked pretty straightforward at first, but most of the main time went into dealing with the stock data sources and making sure failed requests didn't break thedashboard. These were the main problems I ran into while building it.
 
+The portfolio holdings and their initial values are taken from the provided Excel sheet and converted into structured data for the site.
+
 ## 1. Using unofficial data
 
 The assignment needs CMP from YahooFinance and P/E Ratio and LatestEarnings from google finance. There isnt a simple official public API that has everything needed, so I used`yahoo-finance2` and webscraped google finance page using Cheerio library.

@@ -44,7 +44,21 @@ export async function GET() {
           }
         );
 
-        cmp = result.price?.regularMarketPrice ?? null;
+        const yahooCmp =
+          result.price?.regularMarketPrice ?? null;
+
+        if (
+          yahooCmp !== null &&
+          Number.isFinite(yahooCmp) &&
+          yahooCmp > 0 &&
+          yahooCmp < 1000000
+        ) {
+          cmp = yahooCmp;
+        } else {
+          console.log(
+            `Invalid CMP received for ${stock.exchangeSymbol}`
+          );
+        }
       } catch {
         console.log(
           `Yahoo Finance failed for ${stock.exchangeSymbol}`
